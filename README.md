@@ -16,3 +16,23 @@
 ## Issues
 
 I have encountered a permissions error that is not letting me proceed. I'm certain that my code is adequate, I'm just unable to ascertain the correct setup for my permissions.
+
+Update: I corrected the issue, and now it works as intended. I changed my code a bit, but the real issue was a permissions setting. Once I changed that setting, everything worked.
+
+images.json url: https://evanslab17bucket.s3.us-west-2.amazonaws.com/images.json
+note: you won't be able to acces it, but here's what the file holds:
+
+```
+[
+  {
+    "name": "test%2Fkey",
+    "size": 1024,
+    "type": "image"
+  },
+  {
+    "name": "images/sampleimage.png",
+    "size": 4106,
+    "type": "image"
+  }
+]
+```

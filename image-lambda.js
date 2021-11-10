@@ -2,63 +2,57 @@ const AWS = require('aws-sdk');
 const s3 = new AWS.S3();
 
 exports.handler = async (event, context) => {
-  // TODO implement
-  if(event["Records"][0]["eventName"] !== 'ObjectCreated:Put') return;
-  
-  console.log("EVENT:", event);
-  let images = [];
-  
-  const record = event.Records[0].s3;
-  const bucket = record.bucket.name;
-  // const key = record.object.key;
+    // TODO implement
 
-  const key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, ' '));
-  const params = {
-    Bucket: bucket,
-    Key: 'images.json'
-  };
-  
-  try {
-    images = await s3.getObject(params).promise();
-    images = JSON.parse(images.Body.toString('utf-8'));
-    console.log(images);
-  } catch(err) {
-    if(err.message !== "The specified key does not exist.") {
-      console.log(err);
-    } else {
-      images = [];
+    console.log("EVENT:", event);
+    
+    const object = event.Records[0].s3.object;
+    console.log(object);
+    const bucket = "evanslab17bucket";
+    const fileName = object.key;
+    const fileSize = object.size;
+
+    const params = {
+        Bucket: bucket,
+        Key: 'images.json'
+    };
+    
+    const uploadedImage = {
+      name: fileName,
+      size: fileSize,
+      type: 'image'
     }
-  }
-  
-  let object = event["Records"][0]["s3"]["object"];
-  console.log(object);
-  
-  let data = {
-    size: object.size,
-    type: object.ContentType,
-    name: object.key
-  };
-  
-  images.push(data);
-  
-  const params2 = {
-    Body: JSON.stringify(images),
-    Bucket: bucket,
-    Key: object.key,
-    ContentType: "application/json"
-  };
-  
-  s3.putObject(params2, function(err, data) {
-    if(err) {
-      console.log(err, err.stack);
-    } else {
-      console.log(data); 
+
+    try {
+        const images = await s3.getObject(params).promise();
+        const imagesData = JSON.parse(images.Body.toString());
+        console.log("current image file: ",images);
+        
+        imagesData.push(uploadedImage)
+        let newImages = JSON.stringify(imagesData);
+
+        const putImages = await s3.putObject({
+          ...params,
+          Body: newImages,
+          ContentType: 'application/json'
+        }).promise();
+        console.log('JSON file updated for bucket:',putImages);
+    } catch(err) {
+        console.log(err);
+
+        let newImages = JSON.stringify([uploadedImage])
+
+        const putImages = await s3.putObject({
+          ...params,
+          Body: newImages,
+          ContentType: 'application/json'
+        }).promise();
+        console.log('JSON file created for bucket:',putImages);
     }
-  });
-  
-  const response = {
-    statusCode: 200,
-    body: JSON.stringify('Hello from Lambda!'),
-  };
-  return response;
+
+    const response = {
+        statusCode: 200,
+        body: JSON.stringify('Hello from Lambda!'),
+    };
+    return response;
 };
